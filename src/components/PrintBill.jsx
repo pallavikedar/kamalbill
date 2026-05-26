@@ -535,52 +535,6 @@ export default function PrintBill({ billId, onClose }) {
     return client.whatsapp || client.phone || "";
   };
 
-  // ─── Generate PDF and return as Blob ───────────────────────────────────────
-  const generatePDFBlob = async () => {
-    try {
-      if (!window.html2pdf) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      const element = printRef.current;
-      if (!element) throw new Error("Print content not found");
-
-      const clone = element.cloneNode(true);
-      clone.style.padding = "20px";
-      clone.style.background = "white";
-      
-      const container = document.createElement("div");
-      container.style.position = "fixed";
-      container.style.left = "-9999px";
-      container.style.top = "0";
-      container.style.width = "794px";
-      container.style.background = "#fff";
-      container.appendChild(clone);
-      document.body.appendChild(container);
-
-      const pdfBlob = await window.html2pdf().set({
-        margin: [10, 10, 10, 10],
-        filename: `Invoice_${bill?.invoiceNo || "unknown"}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      }).from(container).outputPdf('blob');
-
-      document.body.removeChild(container);
-      return pdfBlob;
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      throw error;
-    }
-  };
-
- 
   // ─── Print Handler ─────────────────────────────────────────────────────────
   const handlePrint = () => {
     setPrinting(true);
@@ -635,7 +589,7 @@ export default function PrintBill({ billId, onClose }) {
                   setTimeout(function() { window.close(); }, 100);
                 }, 500);
               }
-            </script>
+            <\/script>
           </body>
         </html>
       `);
@@ -888,28 +842,14 @@ export default function PrintBill({ billId, onClose }) {
               </ActionButton>
             )}
 
-            {/* <ActionButton
-              onClick={handleDownload}
-              bg="#27AE60"
-              hover="#1E8449"
-              icon={
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              }
-            >
-              Download PDF
-            </ActionButton> */}
-
-            {/* <ActionButton
+            {/* WhatsApp button - commented out but kept for reference
+            <ActionButton
               onClick={() => setShowWA(true)}
               bg="#25D366"
               hover="#128C7E"
               icon={WA_ICON}
             >
-              {waSent ? "✓ Sent" : "WhatsApp"}
+              WhatsApp
               {clientWhatsApp && <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.85 }}>({clientWhatsApp})</span>}
             </ActionButton> */}
 
@@ -935,6 +875,15 @@ export default function PrintBill({ billId, onClose }) {
         </div>
       </div>
 
+      {showWA && (
+        <WhatsAppModal
+          defaultPhone={clientWhatsApp}
+          invoiceNo={bill.invoiceNo}
+          total={calc.total}
+          onSend={() => setShowWA(false)}
+          onClose={() => setShowWA(false)}
+        />
+      )}
       
       {showPaymentHistory && (
         <PaymentHistoryModal

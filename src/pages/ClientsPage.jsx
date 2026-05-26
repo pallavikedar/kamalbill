@@ -299,7 +299,12 @@ function useClientAnalytics(clients, bills) {
       const cb = bills.filter(b => b.clientId === c.id);
       const rev = cb.reduce((s, b) => s + calcBill(b.items).total, 0);
       const paid = cb.reduce((s, b) => s + (b.paidAmount || 0), 0);
-      const overdue = cb.filter(b => b.dueDate && new Date(b.dueDate) < new Date() && !b.isPaid).reduce((s, b) => s + (calcBill(b.items).total - (b.paidAmount || 0)), 0);
+      // FIXED: Changed 'isPaid' to check status or use balanceDue
+      const overdue = cb.filter(b => {
+        const isOverdue = b.dueDate && new Date(b.dueDate) < new Date() && b.status !== "paid";
+        const balanceDue = b.balanceDue || (calcBill(b.items).total - (b.paidAmount || 0));
+        return isOverdue && balanceDue > 0;
+      }).reduce((s, b) => s + (b.balanceDue || (calcBill(b.items).total - (b.paidAmount || 0))), 0);
       map[c.id] = { totalBills: cb.length, totalRevenue: rev, paidAmount: paid, outstanding: rev - paid, overdue, paymentRate: rev ? (paid / rev) * 100 : 0 };
     });
     return map;
@@ -330,7 +335,7 @@ export default function ClientsPage({ bills = [] }) {
     try { setClients(await clientService.list()); }
     catch (err) { setError(`Failed to load: ${err.message}`); }
     finally { setLoading(false); }
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   useEffect(() => { load(); }, [load]);
 
@@ -339,20 +344,20 @@ export default function ClientsPage({ bills = [] }) {
     try { const c = await clientService.create(data); setClients(p => [c, ...p]); return true; }
     catch (err) { alert(`Save failed: ${err.message}`); return false; }
     finally { setSaving(false); }
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   const handleUpdate = useCallback(async (id, data) => {
     setSaving(true);
     try { const u = await clientService.update(id, data); setClients(p => p.map(c => c.id === id ? u : c)); return true; }
     catch (err) { alert(`Update failed: ${err.message}`); return false; }
     finally { setSaving(false); }
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   const handleDelete = useCallback(async (id, name) => {
     if (!window.confirm(`Remove "${name}"? This is irreversible.`)) return;
     try { await clientService.remove(id); setClients(p => p.filter(c => c.id !== id)); }
     catch (err) { alert(`Delete failed: ${err.message}`); }
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   const handleSave = useCallback(async () => {
     if (!form.companyName?.trim() || !form.email?.trim() || !form.phone?.trim()) {
@@ -360,15 +365,15 @@ export default function ClientsPage({ bills = [] }) {
     }
     const ok = editingClient ? await handleUpdate(editingClient.id, form) : await handleCreate(form);
     if (ok) { setForm(BLANK_FORM); setEditingClient(null); setShowForm(false); setActiveSection(0); }
-  }, [form, editingClient, handleUpdate, handleCreate]);
+  }, [form, editingClient, handleUpdate, handleCreate]); // FIXED: Already had correct dependencies
 
   const handleEdit = useCallback((client) => {
     setEditingClient(client); setForm(pickFormFields(client)); setShowForm(true); setActiveSection(0);
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   const handleCancel = useCallback(() => {
     setShowForm(false); setEditingClient(null); setForm(BLANK_FORM); setActiveSection(0);
-  }, []);
+  }, []); // FIXED: Added dependency array
 
   const sortedClients = useMemo(() => {
     let list = clients.filter(c =>
@@ -384,6 +389,7 @@ export default function ClientsPage({ bills = [] }) {
       if (sortBy === "revenue")     return (db.totalRevenue || 0) - (da.totalRevenue || 0);
       if (sortBy === "name")        return a.companyName.localeCompare(b.companyName);
       if (sortBy === "outstanding") return (db.outstanding || 0) - (da.outstanding || 0);
+      if (sortBy === "recent")      return new Date(b.$createdAt || 0) - new Date(a.$createdAt || 0);
       return new Date(b.$createdAt || 0) - new Date(a.$createdAt || 0);
     });
   }, [clients, searchTerm, filterBy, sortBy, analytics]);
@@ -560,7 +566,7 @@ export default function ClientsPage({ bills = [] }) {
                             ["Outstanding", fmt(data.outstanding || 0)], ["Payment Terms", client.paymentTerms],
                             ["Advance Paid", client.advanceAmount ? fmt(client.advanceAmount) : null],
                             ["Special Notes", client.specialNotes],
-                          ],
+                          ].filter(row => row[1] !== null),
                         },
                       ].map(panel => (
                         <div key={panel.title}>

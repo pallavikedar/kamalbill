@@ -769,11 +769,6 @@ const DesktopRow = ({ bill, client, billPayments, isSelected, onSelect, onView, 
 };
 
 // ============================================================================
-// PRINT INVOICE
-// ============================================================================
-
-
-// ============================================================================
 // FILTERS PANEL
 // ============================================================================
 
@@ -867,6 +862,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   const [paymentBill,     setPaymentBill]     = useState(null);
   const [paymentLoading,  setPaymentLoading]  = useState(false);
   const [viewPaymentsBill,setViewPaymentsBill]= useState(null);
+  const [updatingId,      setUpdatingId]      = useState(null); // ← FIXED: Added this line
 
   const [search,          setSearch]          = useState("");
   const [filterClient,    setFilterClient]    = useState("all");

@@ -339,8 +339,33 @@ CLIENT_SECTIONS.forEach(s => s.fields.forEach(f => { BLANK_CLIENT[f.key] = f.def
 const ALL_CLIENT_KEYS = CLIENT_SECTIONS.flatMap(s => s.fields.map(f => f.key));
 
 // ============================================================================
-// HELPERS
+// HELPER FUNCTIONS
 // ============================================================================
+
+// FIXED: Added nextInvoiceNo function
+const nextInvoiceNo = (bills) => {
+  if (!bills || bills.length === 0) {
+    return "INV-001";
+  }
+  
+  // Extract the highest invoice number
+  let maxNum = 0;
+  bills.forEach(bill => {
+    if (bill && bill.invoiceNo) {
+      const match = bill.invoiceNo.match(/(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+  });
+  
+  // Generate next number
+  const nextNum = maxNum + 1;
+  return `INV-${String(nextNum).padStart(3, '0')}`;
+};
 
 const inr = (amount) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(amount);
@@ -476,7 +501,7 @@ export default function NewBillForm({ bills, onSave }) {
   const [clientsError,   setClientsError]   = useState(null);
 
   const [form, setForm] = useState({
-    invoiceNo:      nextInvoiceNo(bills),
+    invoiceNo:      "", // Will be set in useEffect
     date:           new Date().toISOString().split("T")[0],
     dueDate:        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     clientId:       "",
@@ -498,6 +523,13 @@ export default function NewBillForm({ bills, onSave }) {
   const [savingBill,       setSavingBill]       = useState(false);
   const [appwriteError,    setAppwriteError]    = useState(null);
   const [appwriteSuccess,  setAppwriteSuccess]  = useState(null);
+
+  // Set initial invoice number
+  useEffect(() => {
+    if (bills) {
+      setForm(f => ({ ...f, invoiceNo: nextInvoiceNo(bills) }));
+    }
+  }, [bills]);
 
   useEffect(() => { fetchClientsFromAppwrite(); }, []);
 
