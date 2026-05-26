@@ -316,7 +316,7 @@ export default function PrintBill({ billId, onClose }) {
   const [error, setError] = useState(null);
   const [printing, setPrinting] = useState(false);
   const [showWA, setShowWA] = useState(false);
-  const [waSent, setWASent] = useState(false);
+
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
   // ─── Fetch bill, client, and payments data from Appwrite using billId ──────
@@ -580,24 +580,7 @@ export default function PrintBill({ billId, onClose }) {
     }
   };
 
-  // ─── Download PDF Handler ──────────────────────────────────────────────────
-  const handleDownload = async () => {
-    try {
-      const pdfBlob = await generatePDFBlob();
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Invoice_${bill?.invoiceNo || "unknown"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download error:", error);
-      alert("Failed to generate PDF. Please try again.");
-    }
-  };
-
+ 
   // ─── Print Handler ─────────────────────────────────────────────────────────
   const handlePrint = () => {
     setPrinting(true);
@@ -652,7 +635,7 @@ export default function PrintBill({ billId, onClose }) {
                   setTimeout(function() { window.close(); }, 100);
                 }, 500);
               }
-            <\/script>
+            </script>
           </body>
         </html>
       `);
@@ -952,16 +935,7 @@ export default function PrintBill({ billId, onClose }) {
         </div>
       </div>
 
-      {showWA && (
-        <WhatsAppModal
-          defaultPhone={clientWhatsApp}
-          invoiceNo={bill.invoiceNo}
-          total={calc.total}
-          onSend={() => setWASent(true)}
-          onClose={() => setShowWA(false)}
-        />
-      )}
-
+      
       {showPaymentHistory && (
         <PaymentHistoryModal
           bill={bill}

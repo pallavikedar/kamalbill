@@ -2,7 +2,7 @@
 // ─── Professional Invoice Creation with Complete Appwrite Persistence ─────────
 import { useState, useMemo, useEffect } from "react";
 import { Client, Databases, ID, Query } from "appwrite";
-import { calcBill, fmt, nextInvoiceNo } from "../data/utils";
+
 import APPWRITE_CONFIG from "../lib/Appwriteconfig";    // ← no space
 
 // ============================================================================

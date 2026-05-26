@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Client, Databases, Query } from "appwrite";
 import Badge from "../components/Badge";
-import { fmt } from "../data/utils";
+
 import APPWRITE_CONFIG from "../lib/Appwriteconfig";    // ← no space
 
 // ============================================================================
@@ -772,43 +772,6 @@ const DesktopRow = ({ bill, client, billPayments, isSelected, onSelect, onView, 
 // PRINT INVOICE
 // ============================================================================
 
-const PrintInvoice = ({ bill, client, payments }) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-  const totalPaid = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-  printWindow.document.write(`<!DOCTYPE html><html><head><title>Invoice ${bill.invoiceNo}</title><style>
-    body{font-family:Arial,sans-serif;margin:0;padding:20px;} .invoice{max-width:800px;margin:0 auto;}
-    .header{text-align:center;margin-bottom:30px;} .company{font-size:24px;font-weight:bold;}
-    .details{margin:20px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;}
-    .items{width:100%;border-collapse:collapse;margin:20px 0;}
-    .items th,.items td{border:1px solid #ddd;padding:8px;text-align:left;}
-    .items th{background:#f5f5f5;} .totals{text-align:right;margin-top:20px;}
-    .footer{margin-top:30px;font-size:12px;text-align:center;color:#666;}
-    @media print{body{margin:0;padding:0;}.no-print{display:none;}}
-  </style></head><body><div class="invoice">
-    <div class="header"><div class="company">Your Company Name</div><div style="font-size:20px;margin-top:10px;">TAX INVOICE</div></div>
-    <div class="details">
-      <div><strong>Bill To:</strong><br>${client?.companyName || client?.name || 'N/A'}<br>${client?.gstin ? `GSTIN: ${client.gstin}` : ''}</div>
-      <div><strong>Invoice Details:</strong><br>Invoice No: ${bill.invoiceNo}<br>Date: ${new Date(bill.date).toLocaleDateString()}${bill.dueDate ? `<br>Due Date: ${new Date(bill.dueDate).toLocaleDateString()}` : ''}</div>
-    </div>
-    <table class="items"><thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
-    <tbody>${bill.items?.map((item, idx) => `<tr><td>${idx+1}</td><td>${item.description||item.name||'Item'}</td><td>${item.quantity||1}</td><td>${inr(item.rate||item.price||0)}</td><td>${inr((item.quantity||1)*(item.rate||item.price||0))}</td></tr>`).join('')||'<tr><td colspan="5">No items</td></tr>'}</tbody></table>
-    <div class="totals">
-      <div>Subtotal: ${inr(bill.subtotal||0)}</div>
-      ${bill.discountAmount > 0 ? `<div>Discount: -${inr(bill.discountAmount)}</div>` : ''}
-      ${bill.cgst > 0 ? `<div>CGST (${bill.gstRate/2}%): ${inr(bill.cgst)}</div>` : ''}
-      ${bill.sgst > 0 ? `<div>SGST (${bill.gstRate/2}%): ${inr(bill.sgst)}</div>` : ''}
-      <div><strong>Total: ${inr(bill.total)}</strong></div>
-      ${bill.advancePayment > 0 ? `<div>Advance: ${inr(bill.advancePayment)}</div>` : ''}
-      <div><strong>Total Paid: ${inr(totalPaid+(bill.advancePayment||0))}</strong></div>
-      <div><strong>Balance Due: ${inr(bill.balanceDue)}</strong></div>
-    </div>
-    ${payments?.length > 0 ? `<div style="margin-top:30px;border-top:1px solid #ddd;padding-top:20px;"><h3>Payment History</h3><table class="items"><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>${payments.map(p=>`<tr><td>${new Date(p.paymentDate).toLocaleDateString()}</td><td>${inr(p.amount)}</td><td>${p.paymentMethod}</td><td>${p.reference||'-'}</td></tr>`).join('')}</tbody></table></div>` : ''}
-    ${bill.terms ? `<div class="footer">Terms: ${bill.terms}</div>` : ''}
-    <div class="footer">Thank you for your business!</div>
-  </div><div class="no-print" style="text-align:center;margin-top:20px;"><button onclick="window.print()">Print</button></div></body></html>`);
-  printWindow.document.close();
-};
 
 // ============================================================================
 // FILTERS PANEL
@@ -900,7 +863,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   const [payments,        setPayments]        = useState({});
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState(null);
-  const [updatingId,      setUpdatingId]      = useState(null);
+ 
   const [paymentBill,     setPaymentBill]     = useState(null);
   const [paymentLoading,  setPaymentLoading]  = useState(false);
   const [viewPaymentsBill,setViewPaymentsBill]= useState(null);
