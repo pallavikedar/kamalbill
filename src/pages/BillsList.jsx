@@ -863,7 +863,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   const [paymentBill,     setPaymentBill]     = useState(null);
   const [paymentLoading,  setPaymentLoading]  = useState(false);
   const [viewPaymentsBill,setViewPaymentsBill]= useState(null);
-  const [updatingId, setUpdatingId] = useState(null);
+  // const [updatingId, setUpdatingId] = useState(null);
   const [search,          setSearch]          = useState("");
   const [filterClient,    setFilterClient]    = useState("all");
   const [filterStatus,    setFilterStatus]    = useState("all");
