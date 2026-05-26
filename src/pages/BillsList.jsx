@@ -863,7 +863,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   const [paymentBill,     setPaymentBill]     = useState(null);
   const [paymentLoading,  setPaymentLoading]  = useState(false);
   const [viewPaymentsBill,setViewPaymentsBill]= useState(null);
-  // const [updatingId, setUpdatingId] = useState(null);
+
   const [search,          setSearch]          = useState("");
   const [filterClient,    setFilterClient]    = useState("all");
   const [filterStatus,    setFilterStatus]    = useState("all");
@@ -921,18 +921,18 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   // HANDLERS
   // --------------------------------------------------------------------------
 
-  const handleStatusChange = async (billId, newStatus) => {
-    setUpdatingId(billId);
-    try {
-      await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId, billId, { status: newStatus });
-      setBills(prev => prev.map(b => b.id === billId ? { ...b, status: newStatus } : b));
-      onStatusChange?.(billId, newStatus);
-    } catch (err) {
-      setError(`Status update failed: ${err.message}`);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+  // const handleStatusChange = async (billId, newStatus) => {
+  //   setUpdatingId(billId);
+  //   try {
+  //     await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId, billId, { status: newStatus });
+  //     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: newStatus } : b));
+  //     onStatusChange?.(billId, newStatus);
+  //   } catch (err) {
+  //     setError(`Status update failed: ${err.message}`);
+  //   } finally {
+  //     setUpdatingId(null);
+  //   }
+  // };
 
   const handleRecordPayment = async (billId, payment) => {
     setPaymentLoading(true);
