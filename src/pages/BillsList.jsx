@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Client, Databases, Query } from "appwrite";
 import Badge from "../components/Badge";
 
-import APPWRITE_CONFIG from "../lib/Appwriteconfig";    // ← no space
+import APPWRITE_CONFIG from "../lib/Appwriteconfig";
 
 // ============================================================================
 // APPWRITE CLIENT SETUP
@@ -317,10 +317,10 @@ const PaymentModal = ({ bill, onClose, onPaymentSubmit, loading }) => {
         </div>
         <div style={{ marginBottom: DS.space[4] }}>
           <label style={labelStyle}>
-            {paymentMethod === 'cheque'        ? 'Cheque Number'        :
+            {paymentMethod === 'cheque'        ? 'Cheque Number'          :
              paymentMethod === 'bank_transfer' ? 'Transaction/UTR Number' :
-             paymentMethod === 'upi'           ? 'UPI Transaction ID'   :
-             paymentMethod === 'card'          ? 'Card Reference Number':
+             paymentMethod === 'upi'           ? 'UPI Transaction ID'     :
+             paymentMethod === 'card'          ? 'Card Reference Number'  :
              'Reference Number (Optional)'}
           </label>
           <input type="text" value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Enter reference number" style={inputStyle} />
@@ -331,8 +331,8 @@ const PaymentModal = ({ bill, onClose, onPaymentSubmit, loading }) => {
         </div>
 
         <div style={{ display: "flex", gap: DS.space[3] }}>
-          <Button variant="secondary" onClick={onClose}       fullWidth>Cancel</Button>
-          <Button variant="success"   onClick={handleSubmit}  disabled={paymentAmount <= 0 || paymentAmount > maxAmount} loading={loading} fullWidth>
+          <Button variant="secondary" onClick={onClose}      fullWidth>Cancel</Button>
+          <Button variant="success"   onClick={handleSubmit} disabled={paymentAmount <= 0 || paymentAmount > maxAmount} loading={loading} fullWidth>
             {loading ? 'Recording…' : 'Record Payment'}
           </Button>
         </div>
@@ -442,14 +442,14 @@ const SkeletonCard = () => (
 );
 
 // ============================================================================
-// MOBILE BILL CARD  — full data with collapsible breakdown
+// MOBILE BILL CARD
 // ============================================================================
 
 const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPayment, onViewPayments, paymentLoading, paymentBillId }) => {
   const [expanded, setExpanded] = useState(false);
-  const isOverdue    = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
+  const isOverdue     = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
   const hasDueBalance = bill.balanceDue > 0 && bill.status !== "paid";
-  const paidPercent  = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
+  const paidPercent   = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
 
   const statusColors = {
     paid:    { bg: DS.colors.success.bg,  color: DS.colors.success.dark,  label: "Paid"    },
@@ -458,13 +458,10 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
     partial: { bg: DS.colors.info.bg,     color: DS.colors.info.dark,     label: "Partial" },
   };
   const statusStyle = statusColors[bill.status] || statusColors.pending;
-
   const cols = hasDueBalance ? "1fr 1fr 1fr" : "1fr 1fr";
 
   return (
     <div className="bill-card" style={{ padding: DS.space[4], borderBottom: `1px solid ${DS.colors.border.light}`, background: "white" }}>
-
-      {/* Row 1 — Invoice No + Status */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: DS.space[2] }}>
         <div>
           <div style={{ fontSize: DS.font.size.md, fontWeight: DS.font.weight.semibold, color: DS.colors.gray[900] }}>{bill.invoiceNo}</div>
@@ -481,7 +478,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         </div>
       </div>
 
-      {/* Row 2 — Client */}
       <div style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[700], marginBottom: DS.space[2], fontWeight: DS.font.weight.medium }}>
         {client?.companyName || client?.name || <span style={{ color: DS.colors.gray[400], fontStyle: "italic" }}>Unknown client</span>}
         {client?.gstin && (
@@ -491,7 +487,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         )}
       </div>
 
-      {/* Row 3 — Date + Amount */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: DS.space[2] }}>
         <div>
           <div style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[600] }}>
@@ -510,7 +505,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         </div>
       </div>
 
-      {/* Expand/collapse toggle */}
       <div
         onClick={() => setExpanded(v => !v)}
         style={{ fontSize: DS.font.size.xs, color: DS.colors.primary.DEFAULT, cursor: "pointer", marginBottom: DS.space[2], userSelect: "none" }}
@@ -518,19 +512,14 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         {expanded ? "▲ Hide breakdown" : "▼ Show breakdown"}
       </div>
 
-      {/* Collapsible financial breakdown */}
       {expanded && (
-        <div style={{
-          background: DS.colors.gray[50], borderRadius: DS.radius.md,
-          padding: DS.space[3], marginBottom: DS.space[3],
-          fontSize: DS.font.size.xs, color: DS.colors.gray[700],
-        }}>
+        <div style={{ background: DS.colors.gray[50], borderRadius: DS.radius.md, padding: DS.space[3], marginBottom: DS.space[3], fontSize: DS.font.size.xs, color: DS.colors.gray[700] }}>
           {[
-            { label: "Subtotal",       value: bill.subtotal,       show: true,                      color: null },
-            { label: "Discount",       value: -bill.discountAmount, show: bill.discountAmount > 0,   color: DS.colors.danger.DEFAULT },
-            { label: "After discount", value: bill.afterDiscount,   show: bill.discountAmount > 0 && bill.afterDiscount > 0, color: null },
-            { label: `CGST (${(bill.gstRate || 0) / 2}%)`, value: bill.cgst, show: bill.cgst > 0,  color: DS.colors.info.DEFAULT },
-            { label: `SGST (${(bill.gstRate || 0) / 2}%)`, value: bill.sgst, show: bill.sgst > 0,  color: DS.colors.info.DEFAULT },
+            { label: "Subtotal",       value: bill.subtotal,        show: true,                                                           color: null                    },
+            { label: "Discount",       value: -bill.discountAmount, show: bill.discountAmount > 0,                                        color: DS.colors.danger.DEFAULT },
+            { label: "After discount", value: bill.afterDiscount,   show: bill.discountAmount > 0 && bill.afterDiscount > 0,              color: null                    },
+            { label: `CGST (${(bill.gstRate || 0) / 2}%)`, value: bill.cgst, show: bill.cgst > 0,                                        color: DS.colors.info.DEFAULT   },
+            { label: `SGST (${(bill.gstRate || 0) / 2}%)`, value: bill.sgst, show: bill.sgst > 0,                                        color: DS.colors.info.DEFAULT   },
           ].filter(r => r.show).map((row, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: `3px 0` }}>
               <span style={{ color: row.color || DS.colors.gray[600] }}>{row.label}</span>
@@ -539,13 +528,9 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
               </span>
             </div>
           ))}
-
-          {/* Divider + Total */}
           <div style={{ borderTop: `1px solid ${DS.colors.border.DEFAULT}`, marginTop: DS.space[2], paddingTop: DS.space[2], display: "flex", justifyContent: "space-between", fontWeight: DS.font.weight.semibold }}>
             <span>Total</span><span>{inr(bill.total)}</span>
           </div>
-
-          {/* Payment rows */}
           {bill.advancePayment > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", padding: `3px 0`, color: DS.colors.info.DEFAULT }}>
               <span>Advance paid</span><span>{inr(bill.advancePayment)}</span>
@@ -564,7 +549,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         </div>
       )}
 
-      {/* Progress bar */}
       {paidPercent > 0 && paidPercent < 100 && (
         <div style={{ marginBottom: DS.space[3] }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: DS.font.size.xs, color: DS.colors.gray[500], marginBottom: DS.space[1] }}>
@@ -577,7 +561,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         </div>
       )}
 
-      {/* Payment history link */}
       {(billPayments.length > 0 || bill.advancePayment > 0) && (
         <div
           style={{ fontSize: DS.font.size.xs, color: DS.colors.primary.DEFAULT, marginBottom: DS.space[3], cursor: "pointer", textDecoration: "underline" }}
@@ -587,7 +570,6 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
         </div>
       )}
 
-      {/* Actions — grid so buttons never overflow */}
       <div style={{ display: "grid", gridTemplateColumns: cols, gap: DS.space[2] }}>
         {hasDueBalance && (
           <Button variant="success" size="sm" onClick={() => onPayment(bill)}
@@ -603,14 +585,14 @@ const MobileBillCard = ({ bill, client, billPayments, onView, onDelete, onPaymen
 };
 
 // ============================================================================
-// TABLET ROW  — 5-column, fits 640–1023 px
+// TABLET ROW
 // ============================================================================
 
 const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, onDelete, onPayment, onViewPayments, paymentLoading, paymentBillId }) => {
   const [hovered, setHovered] = useState(false);
-  const isOverdue    = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
+  const isOverdue     = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
   const hasDueBalance = bill.balanceDue > 0 && bill.status !== "paid";
-  const paidPercent  = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
+  const paidPercent   = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
 
   return (
     <div className="bill-row"
@@ -627,10 +609,8 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Checkbox */}
       <div><input type="checkbox" checked={isSelected} onChange={onSelect} style={{ cursor: "pointer" }} /></div>
 
-      {/* Invoice + Client */}
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.gray[900], overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bill.invoiceNo}</div>
         <div style={{ fontSize: DS.font.size.xs, color: DS.colors.gray[600], overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -640,7 +620,6 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
         {bill.advancePayment > 0 && <div style={{ fontSize: DS.font.size.xs, color: DS.colors.info.DEFAULT }}>Adv: {inr(bill.advancePayment)}</div>}
       </div>
 
-      {/* Date */}
       <div>
         <div style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[700] }}>
           {bill.date ? new Date(bill.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
@@ -653,7 +632,6 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
         <GSTBadge gstType={bill.gstType} gstRate={bill.gstRate} />
       </div>
 
-      {/* Amount + paid/due + progress */}
       <div style={{ textAlign: "right" }}>
         <div style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.success.DEFAULT }}>{inr(bill.total)}</div>
         <div style={{ fontSize: DS.font.size.xs, color: DS.colors.success.DEFAULT }}>Paid: {inr(bill.paidAmount || 0)}</div>
@@ -671,7 +649,6 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
         )}
       </div>
 
-      {/* Status + Actions */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: DS.space[2] }}>
         <Badge status={bill.status} />
         <div style={{ display: "flex", gap: DS.space[1], flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -679,7 +656,7 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
             <Button variant="success" size="sm" onClick={() => onPayment(bill)}
               loading={paymentLoading && paymentBillId === bill.id} icon="💳">Pay</Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => onView?.(bill.id)}               icon="👁">View</Button>
+          <Button variant="outline" size="sm" onClick={() => onView?.(bill.id)}                icon="👁">View</Button>
           <Button variant="danger"  size="sm" onClick={() => onDelete(bill.id, bill.invoiceNo)} icon="🗑">Del</Button>
         </div>
       </div>
@@ -688,14 +665,14 @@ const TabletRow = ({ bill, client, billPayments, isSelected, onSelect, onView, o
 };
 
 // ============================================================================
-// DESKTOP TABLE ROW  — 9-column, 1024 px+
+// DESKTOP TABLE ROW
 // ============================================================================
 
 const DesktopRow = ({ bill, client, billPayments, isSelected, onSelect, onView, onDelete, onPayment, onViewPayments, paymentLoading, paymentBillId }) => {
   const [hovered, setHovered] = useState(false);
-  const isOverdue    = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
+  const isOverdue     = bill.dueDate && new Date(bill.dueDate) < new Date() && bill.status !== "paid";
   const hasDueBalance = bill.balanceDue > 0 && bill.status !== "paid";
-  const paidPercent  = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
+  const paidPercent   = bill.total > 0 ? ((bill.paidAmount || 0) / bill.total) * 100 : 0;
 
   return (
     <div className="bill-row"
@@ -762,7 +739,7 @@ const DesktopRow = ({ bill, client, billPayments, isSelected, onSelect, onView, 
         {hasDueBalance && (
           <Button variant="success" size="sm" onClick={() => onPayment(bill)} loading={paymentLoading && paymentBillId === bill.id} icon="💳">Pay</Button>
         )}
-        <Button variant="outline" size="sm" onClick={() => onView?.(bill.id)}               icon="👁">View</Button>
+        <Button variant="outline" size="sm" onClick={() => onView?.(bill.id)}                icon="👁">View</Button>
         <Button variant="danger"  size="sm" onClick={() => onDelete(bill.id, bill.invoiceNo)} icon="🗑">Del</Button>
       </div>
     </div>
@@ -773,7 +750,7 @@ const DesktopRow = ({ bill, client, billPayments, isSelected, onSelect, onView, 
 // FILTERS PANEL
 // ============================================================================
 
-const FiltersPanel = ({ clients, search, setSearch, filterClient, setFilterClient, selectedCustomer, setSelectedCustomer, filterStatus, setFilterStatus, filterGST, setFilterGST, sortBy, setSortBy, dateRange, setDateRange, isMobile }) => {
+const FiltersPanel = ({ clients, search, setSearch, filterClient, setFilterClient, filterStatus, setFilterStatus, filterGST, setFilterGST, sortBy, setSortBy, dateRange, setDateRange, isMobile }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const selectStyle = {
@@ -783,11 +760,10 @@ const FiltersPanel = ({ clients, search, setSearch, filterClient, setFilterClien
     background: "white", cursor: "pointer", outline: "none",
   };
 
-  const hasActiveFilters = filterClient !== "all" || selectedCustomer !== "all" || filterStatus !== "all" || filterGST !== "all" || dateRange.from || dateRange.to;
+  const hasActiveFilters = filterClient !== "all" || filterStatus !== "all" || filterGST !== "all" || dateRange.from || dateRange.to;
 
   return (
     <div style={{ background: "white", borderRadius: DS.radius.lg, border: `1px solid ${DS.colors.border.light}`, marginBottom: DS.space[4] }}>
-      {/* Search + Toggle row */}
       <div style={{ padding: DS.space[4], display: "flex", gap: DS.space[3], alignItems: "center" }}>
         <SearchBar value={search} onChange={setSearch} placeholder="Search invoice or client…" />
         {isMobile && (
@@ -798,7 +774,6 @@ const FiltersPanel = ({ clients, search, setSearch, filterClient, setFilterClien
         )}
       </div>
 
-      {/* Filters — always visible on tablet+desktop, collapsible on mobile */}
       {(!isMobile || filtersOpen) && (
         <div style={{ padding: `0 ${DS.space[4]} ${DS.space[4]} ${DS.space[4]}`, borderTop: `1px solid ${DS.colors.border.light}` }}>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit, minmax(180px, 1fr))", gap: DS.space[3], marginTop: DS.space[4] }}>
@@ -830,12 +805,11 @@ const FiltersPanel = ({ clients, search, setSearch, filterClient, setFilterClien
             </select>
           </div>
 
-          {/* Date range */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: DS.space[3], alignItems: "center", marginTop: DS.space[3] }}>
             <span style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[600], flexShrink: 0 }}>Date Range:</span>
             <input type="date" value={dateRange.from} onChange={e => setDateRange({ ...dateRange, from: e.target.value })} style={{ padding: DS.space[2], border: `1px solid ${DS.colors.border.DEFAULT}`, borderRadius: DS.radius.md, fontSize: DS.font.size.sm, outline: "none", flex: "1 1 120px", minWidth: 0 }} />
             <span style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[400], flexShrink: 0 }}>to</span>
-            <input type="date" value={dateRange.to}   onChange={e => setDateRange({ ...dateRange, to:   e.target.value })} style={{ padding: DS.space[2], border: `1px solid ${DS.colors.border.DEFAULT}`, borderRadius: DS.radius.md, fontSize: DS.font.size.sm, outline: "none", flex: "1 1 120px", minWidth: 0 }} />
+            <input type="date" value={dateRange.to}   onChange={e => setDateRange({ ...dateRange, to: e.target.value })} style={{ padding: DS.space[2], border: `1px solid ${DS.colors.border.DEFAULT}`, borderRadius: DS.radius.md, fontSize: DS.font.size.sm, outline: "none", flex: "1 1 120px", minWidth: 0 }} />
             {(dateRange.from || dateRange.to) && (
               <Button variant="secondary" size="sm" onClick={() => setDateRange({ from: "", to: "" })}>Clear</Button>
             )}
@@ -854,24 +828,23 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   const { isMobile, isTablet, isDesktop } = useBreakpoint();
   const isCompact = isMobile || isTablet;
 
-  const [bills,           setBills]           = useState([]);
-  const [clients,         setClients]         = useState([]);
-  const [payments,        setPayments]        = useState({});
-  const [loading,         setLoading]         = useState(true);
-  const [error,           setError]           = useState(null);
- 
-  const [paymentBill,     setPaymentBill]     = useState(null);
-  const [paymentLoading,  setPaymentLoading]  = useState(false);
-  const [viewPaymentsBill,setViewPaymentsBill]= useState(null);
+  const [bills,            setBills]            = useState([]);
+  const [clients,          setClients]          = useState([]);
+  const [payments,         setPayments]         = useState({});
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState(null);
 
-  const [search,          setSearch]          = useState("");
-  const [filterClient,    setFilterClient]    = useState("all");
-  const [filterStatus,    setFilterStatus]    = useState("all");
-  const [filterGST,       setFilterGST]       = useState("all");
-  const [dateRange,       setDateRange]       = useState({ from: "", to: "" });
-  const [sortBy,          setSortBy]          = useState("date_desc");
-  const [selectedBills,   setSelectedBills]   = useState(new Set());
-  const [selectedCustomer,setSelectedCustomer]= useState("all");
+  const [paymentBill,      setPaymentBill]      = useState(null);
+  const [paymentLoading,   setPaymentLoading]   = useState(false);
+  const [viewPaymentsBill, setViewPaymentsBill] = useState(null);
+
+  const [search,           setSearch]           = useState("");
+  const [filterClient,     setFilterClient]     = useState("all");
+  const [filterStatus,     setFilterStatus]     = useState("all");
+  const [filterGST,        setFilterGST]        = useState("all");
+  const [dateRange,        setDateRange]        = useState({ from: "", to: "" });
+  const [sortBy,           setSortBy]           = useState("date_desc");
+  const [selectedBills,    setSelectedBills]    = useState(new Set());
 
   // --------------------------------------------------------------------------
   // DATA FETCHING
@@ -882,8 +855,8 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
     setError(null);
     try {
       const [billsRes, clientsRes] = await Promise.all([
-        databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId,        [Query.limit(500), Query.orderDesc("$createdAt")]),
-        databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.collectionId,  [Query.limit(500)]),
+        databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId,       [Query.limit(500), Query.orderDesc("$createdAt")]),
+        databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.collectionId, [Query.limit(500)]),
       ]);
 
       let billsData = billsRes.documents.map(mapBillDoc);
@@ -896,11 +869,11 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
       });
 
       billsData = billsData.map(bill => {
-        const billPayments         = paymentsMap[bill.id] || [];
+        const billPayments          = paymentsMap[bill.id] || [];
         const totalPaidFromPayments = billPayments.reduce((sum, p) => sum + p.amount, 0);
-        const totalPaid            = (bill.advancePayment || 0) + totalPaidFromPayments;
-        const balanceDue           = bill.total - totalPaid;
-        const status               = balanceDue <= 0 ? "paid" : totalPaid > 0 ? "partial" : bill.status;
+        const totalPaid             = (bill.advancePayment || 0) + totalPaidFromPayments;
+        const balanceDue            = bill.total - totalPaid;
+        const status                = balanceDue <= 0 ? "paid" : totalPaid > 0 ? "partial" : bill.status;
         return { ...bill, paidAmount: totalPaid, balanceDue, status };
       });
 
@@ -921,18 +894,15 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   // HANDLERS
   // --------------------------------------------------------------------------
 
-  // const handleStatusChange = async (billId, newStatus) => {
-  //   setUpdatingId(billId);
-  //   try {
-  //     await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId, billId, { status: newStatus });
-  //     setBills(prev => prev.map(b => b.id === billId ? { ...b, status: newStatus } : b));
-  //     onStatusChange?.(billId, newStatus);
-  //   } catch (err) {
-  //     setError(`Status update failed: ${err.message}`);
-  //   } finally {
-  //     setUpdatingId(null);
-  //   }
-  // };
+  const handleStatusChange = async (billId, newStatus) => {
+    try {
+      await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.billId, billId, { status: newStatus });
+      setBills(prev => prev.map(b => b.id === billId ? { ...b, status: newStatus } : b));
+      onStatusChange?.(billId, newStatus);
+    } catch (err) {
+      setError(`Status update failed: ${err.message}`);
+    }
+  };
 
   const handleRecordPayment = async (billId, payment) => {
     setPaymentLoading(true);
@@ -946,7 +916,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
       });
 
       const allPayments           = await databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.paymentCollectionId, [Query.equal('invoiceId', billId)]);
-      const totalPaidFromPayments  = allPayments.documents.reduce((sum, p) => sum + p.amount, 0);
+      const totalPaidFromPayments = allPayments.documents.reduce((sum, p) => sum + p.amount, 0);
       const totalPaid             = (bill.advancePayment || 0) + totalPaidFromPayments;
       const newBalanceDue         = bill.total - totalPaid;
       const newStatus             = newBalanceDue <= 0 ? "paid" : totalPaid > 0 ? "partial" : bill.status;
@@ -985,17 +955,28 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
 
   const handleExportData = () => {
     const exportData = filteredBills.map(bill => {
-      const c            = clients.find(x => x.id === bill.clientId);
-      const billPayments = payments[bill.id] || [];
+      const c                     = clients.find(x => x.id === bill.clientId);
+      const billPayments          = payments[bill.id] || [];
       const totalPaidFromPayments = billPayments.reduce((sum, p) => sum + p.amount, 0);
       return {
-        'Invoice No': bill.invoiceNo, 'Date': bill.date, 'Due Date': bill.dueDate,
-        'Client': c?.companyName || c?.name || 'Unknown', 'GSTIN': c?.gstin || '',
-        'Subtotal': bill.subtotal, 'Discount': bill.discountAmount, 'Advance Payment': bill.advancePayment,
-        'CGST': bill.cgst, 'SGST': bill.sgst, 'Total Tax': bill.totalTax, 'Total': bill.total,
-        'Payments Received': totalPaidFromPayments, 'Total Paid': bill.paidAmount, 'Balance Due': bill.balanceDue,
-        'Status': bill.status, 'GST Type': bill.gstType === 'with_gst' ? `With GST (${bill.gstRate}%)` : 'Without GST',
-        'Payment Count': billPayments.length,
+        'Invoice No':        bill.invoiceNo,
+        'Date':              bill.date,
+        'Due Date':          bill.dueDate,
+        'Client':            c?.companyName || c?.name || 'Unknown',
+        'GSTIN':             c?.gstin || '',
+        'Subtotal':          bill.subtotal,
+        'Discount':          bill.discountAmount,
+        'Advance Payment':   bill.advancePayment,
+        'CGST':              bill.cgst,
+        'SGST':              bill.sgst,
+        'Total Tax':         bill.totalTax,
+        'Total':             bill.total,
+        'Payments Received': totalPaidFromPayments,
+        'Total Paid':        bill.paidAmount,
+        'Balance Due':       bill.balanceDue,
+        'Status':            bill.status,
+        'GST Type':          bill.gstType === 'with_gst' ? `With GST (${bill.gstRate}%)` : 'Without GST',
+        'Payment Count':     billPayments.length,
       };
     });
     exportToCSV(exportData, `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1010,34 +991,36 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
     const pending = bills.filter(b => b.status === "pending");
     const overdue = bills.filter(b => b.status === "overdue");
     const partial = bills.filter(b => b.status === "partial");
-    const withGST = bills.filter(b => b.gstType === "with_gst" && b.gstRate > 0);
     return {
       total:     bills.length,
       revenue:   bills.reduce((s, b) => s + b.total, 0),
-      paid:      { count: paid.length,    amount: paid.reduce((s,b)    => s + b.total, 0) },
-      pending:   { count: pending.length, amount: pending.reduce((s,b) => s + b.total, 0) },
-      overdue:   { count: overdue.length, amount: overdue.reduce((s,b) => s + b.total, 0) },
-      partial:   { count: partial.length, amount: partial.reduce((s,b) => s + b.total, 0) },
+      paid:      { count: paid.length,    amount: paid.reduce((s, b)    => s + b.total, 0) },
+      pending:   { count: pending.length, amount: pending.reduce((s, b) => s + b.total, 0) },
+      overdue:   { count: overdue.length, amount: overdue.reduce((s, b) => s + b.total, 0) },
+      partial:   { count: partial.length, amount: partial.reduce((s, b) => s + b.total, 0) },
       totalPaid: bills.reduce((s, b) => s + (b.paidAmount || 0), 0),
       totalDue:  bills.reduce((s, b) => s + (b.balanceDue || 0), 0),
-      tax:       { total: bills.reduce((s,b) => s + (b.cgst||0) + (b.sgst||0), 0), withGST: withGST.length },
+      tax:       { total: bills.reduce((s, b) => s + (b.cgst || 0) + (b.sgst || 0), 0) },
     };
   }, [bills]);
 
   const filteredBills = useMemo(() => {
     let list = bills.filter(bill => {
-      const c          = clients.find(x => x.id === bill.clientId);
+      const c           = clients.find(x => x.id === bill.clientId);
       const matchSearch = bill.invoiceNo.toLowerCase().includes(search.toLowerCase())
                        || c?.companyName?.toLowerCase().includes(search.toLowerCase())
                        || c?.name?.toLowerCase().includes(search.toLowerCase());
-      const matchClient   = filterClient   === "all" || bill.clientId === filterClient;
-      const matchStatus   = filterStatus   === "all" || bill.status   === filterStatus;
-      const matchGST      = filterGST      === "all" ? true : filterGST === "with_gst" ? (bill.gstType === "with_gst" && bill.gstRate > 0) : (bill.gstType === "without_gst" || bill.gstRate === 0);
-      const matchCustomer = selectedCustomer === "all" || bill.clientId === selectedCustomer;
-      let   matchDate     = true;
+      const matchClient = filterClient === "all" || bill.clientId === filterClient;
+      const matchStatus = filterStatus === "all" || bill.status   === filterStatus;
+      const matchGST    = filterGST    === "all"
+        ? true
+        : filterGST === "with_gst"
+          ? (bill.gstType === "with_gst" && bill.gstRate > 0)
+          : (bill.gstType === "without_gst" || bill.gstRate === 0);
+      let matchDate = true;
       if (dateRange.from) matchDate = matchDate && new Date(bill.date) >= new Date(dateRange.from);
       if (dateRange.to)   matchDate = matchDate && new Date(bill.date) <= new Date(dateRange.to);
-      return matchSearch && matchClient && matchStatus && matchGST && matchDate && matchCustomer;
+      return matchSearch && matchClient && matchStatus && matchGST && matchDate;
     });
 
     list.sort((a, b) => {
@@ -1054,7 +1037,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
       }
     });
     return list;
-  }, [bills, clients, search, filterClient, filterStatus, filterGST, selectedCustomer, dateRange, sortBy]);
+  }, [bills, clients, search, filterClient, filterStatus, filterGST, dateRange, sortBy]);
 
   // --------------------------------------------------------------------------
   // SELECTION HELPERS
@@ -1078,20 +1061,16 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
   };
 
   // --------------------------------------------------------------------------
-  // LAYOUT HELPERS
+  // RENDER
   // --------------------------------------------------------------------------
 
   const pagePadding = isMobile ? DS.space[3] : isTablet ? DS.space[5] : DS.space[8];
-
-  // --------------------------------------------------------------------------
-  // RENDER
-  // --------------------------------------------------------------------------
 
   return (
     <div style={{ fontFamily: DS.font.family, background: DS.colors.gray[50], minHeight: "100vh" }}>
       <div style={{ padding: pagePadding, maxWidth: 1400, margin: "0 auto" }}>
 
-        {/* ── Error Banner ─────────────────────────────────────────── */}
+        {/* Error Banner */}
         {error && (
           <div style={{ marginBottom: DS.space[4], padding: DS.space[3], background: DS.colors.danger.bg, border: `1px solid ${DS.colors.danger.DEFAULT}`, borderRadius: DS.radius.md, color: DS.colors.danger.dark, fontSize: DS.font.size.sm, display: "flex", justifyContent: "space-between", alignItems: "center", gap: DS.space[3] }}>
             <span>⚠ {error}</span>
@@ -1099,7 +1078,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
           </div>
         )}
 
-        {/* ── Page Header ──────────────────────────────────────────── */}
+        {/* Page Header */}
         <div style={{ marginBottom: DS.space[6], display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexWrap: "wrap", gap: DS.space[3] }}>
           <div>
             <h1 style={{ fontSize: isMobile ? DS.font.size.xl : DS.font.size["3xl"], fontWeight: DS.font.weight.semibold, color: DS.colors.gray[900], letterSpacing: "-0.02em", margin: 0 }}>Invoice Management</h1>
@@ -1112,7 +1091,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
           </div>
         </div>
 
-        {/* ── Stats Cards ──────────────────────────────────────────── */}
+        {/* Stats Cards */}
         <div style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(4, 1fr)" : "repeat(7, 1fr)",
@@ -1121,28 +1100,27 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
         }}>
           <StatCard label="Total Invoices" value={loading ? "…" : stats.total}              icon="📄" color={DS.colors.primary.DEFAULT} compact={isCompact} />
           <StatCard label="Total Revenue"  value={loading ? "…" : inr(stats.revenue)}       icon="💰" color={DS.colors.success.DEFAULT} compact={isCompact} />
-          <StatCard label="Paid"           value={loading ? "…" : `${stats.paid.count}`}    icon="✓" color={DS.colors.success.DEFAULT} subtext={loading ? "" : inr(stats.paid.amount)}    compact={isCompact} />
+          <StatCard label="Paid"           value={loading ? "…" : `${stats.paid.count}`}    icon="✓"  color={DS.colors.success.DEFAULT} subtext={loading ? "" : inr(stats.paid.amount)}    compact={isCompact} />
           <StatCard label="Pending"        value={loading ? "…" : `${stats.pending.count}`} icon="⏳" color={DS.colors.warning.DEFAULT} subtext={loading ? "" : inr(stats.pending.amount)} compact={isCompact} />
-          {!isMobile && <StatCard label="Partial"  value={loading ? "…" : stats.partial.count} icon="🔄" color={DS.colors.info.DEFAULT}    compact={isCompact} />}
-          {!isMobile && <StatCard label="Overdue"  value={loading ? "…" : stats.overdue.count} icon="⚠"  color={DS.colors.danger.DEFAULT}  compact={isCompact} />}
+          {!isMobile && <StatCard label="Partial" value={loading ? "…" : stats.partial.count} icon="🔄" color={DS.colors.info.DEFAULT}   compact={isCompact} />}
+          {!isMobile && <StatCard label="Overdue" value={loading ? "…" : stats.overdue.count} icon="⚠"  color={DS.colors.danger.DEFAULT} compact={isCompact} />}
           <StatCard label="Total Due"      value={loading ? "…" : inr(stats.totalDue)}      icon="💳" color={DS.colors.danger.DEFAULT}  subtext="Outstanding" compact={isCompact} />
-          {isMobile  && <StatCard label="Overdue"  value={loading ? "…" : stats.overdue.count} icon="⚠"  color={DS.colors.danger.DEFAULT}  compact={isCompact} />}
+          {isMobile  && <StatCard label="Overdue" value={loading ? "…" : stats.overdue.count} icon="⚠"  color={DS.colors.danger.DEFAULT} compact={isCompact} />}
         </div>
 
-        {/* ── Filters ──────────────────────────────────────────────── */}
+        {/* Filters */}
         <FiltersPanel
           clients={clients}
-          search={search}               setSearch={setSearch}
-          filterClient={filterClient}   setFilterClient={setFilterClient}
-          selectedCustomer={selectedCustomer} setSelectedCustomer={setSelectedCustomer}
-          filterStatus={filterStatus}   setFilterStatus={setFilterStatus}
-          filterGST={filterGST}         setFilterGST={setFilterGST}
-          sortBy={sortBy}               setSortBy={setSortBy}
-          dateRange={dateRange}         setDateRange={setDateRange}
+          search={search}             setSearch={setSearch}
+          filterClient={filterClient} setFilterClient={setFilterClient}
+          filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+          filterGST={filterGST}       setFilterGST={setFilterGST}
+          sortBy={sortBy}             setSortBy={setSortBy}
+          dateRange={dateRange}       setDateRange={setDateRange}
           isMobile={isMobile}
         />
 
-        {/* ── Bulk Actions ─────────────────────────────────────────── */}
+        {/* Bulk Actions */}
         {selectedBills.size > 0 && (
           <div style={{ background: DS.colors.primary.surface, borderRadius: DS.radius.lg, padding: DS.space[4], marginBottom: DS.space[4], display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: DS.space[3] }}>
             <span style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[700] }}>{selectedBills.size} invoice(s) selected</span>
@@ -1153,7 +1131,7 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
           </div>
         )}
 
-        {/* ── Bills Table / Cards ───────────────────────────────────── */}
+        {/* Bills Table / Cards */}
         <div style={{ background: "white", borderRadius: DS.radius.lg, border: `1px solid ${DS.colors.border.light}`, overflow: "hidden" }}>
 
           {/* Desktop header */}
@@ -1196,21 +1174,19 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
             </div>
           )}
 
-          {/* ── Scrollable content area ─────────────────────────── */}
+          {/* Scrollable content */}
           <div
             className="bills-scroll"
             style={{
-              maxHeight:  isDesktop ? "calc(100vh - 440px)" : "none",
-              overflowY:  isDesktop ? "auto"                : "visible",
-              overflowX:  "hidden",   // prevents horizontal bleed on tablet/mobile
+              maxHeight: isDesktop ? "calc(100vh - 440px)" : "none",
+              overflowY: isDesktop ? "auto"                : "visible",
+              overflowX: "hidden",
             }}
           >
-            {/* Loading skeletons */}
             {loading && isDesktop && [1,2,3,4,5].map(i => <SkeletonDesktop key={i} />)}
             {loading && isTablet  && [1,2,3,4].map(i =>   <SkeletonTablet  key={i} />)}
             {loading && isMobile  && [1,2,3,4].map(i =>   <SkeletonCard    key={i} />)}
 
-            {/* Empty state */}
             {!loading && filteredBills.length === 0 && (
               <div style={{ padding: DS.space[12], textAlign: "center", color: DS.colors.gray[500] }}>
                 <div style={{ fontSize: 48, marginBottom: DS.space[4], opacity: 0.5 }}>📋</div>
@@ -1223,7 +1199,6 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
               </div>
             )}
 
-            {/* Rows */}
             {!loading && filteredBills.map(bill => {
               const c            = clients.find(x => x.id === bill.clientId);
               const billPayments = payments[bill.id] || [];
@@ -1261,23 +1236,23 @@ export default function BillsList({ onView, onDelete, onStatusChange }) {
           </div>
         </div>
 
-        {/* ── Footer Summary ───────────────────────────────────────── */}
+        {/* Footer Summary */}
         {!loading && filteredBills.length > 0 && (
           <div style={{ marginTop: DS.space[4], padding: DS.space[4], background: "white", borderRadius: DS.radius.lg, border: `1px solid ${DS.colors.border.light}`, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: DS.space[3] }}>
             <span style={{ fontSize: DS.font.size.sm, color: DS.colors.gray[600] }}>
               Showing {filteredBills.length} of {bills.length} invoices
             </span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: isMobile ? DS.space[3] : DS.space[4] }}>
-              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.gray[800] }}>   Total: {inr(filteredBills.reduce((s,b) => s + b.total,               0))}</span>
-              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.success.DEFAULT }}>Paid: {inr(filteredBills.reduce((s,b) => s + (b.paidAmount   || 0), 0))}</span>
-              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.danger.DEFAULT }}>  Due: {inr(filteredBills.reduce((s,b) => s + (b.balanceDue   || 0), 0))}</span>
-              {!isMobile && <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.info.DEFAULT }}>Tax: {inr(filteredBills.reduce((s,b) => s + (b.cgst||0) + (b.sgst||0), 0))}</span>}
+              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.gray[800] }}>   Total: {inr(filteredBills.reduce((s, b) => s + b.total,               0))}</span>
+              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.success.DEFAULT }}>Paid: {inr(filteredBills.reduce((s, b) => s + (b.paidAmount   || 0), 0))}</span>
+              <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.danger.DEFAULT }}>   Due: {inr(filteredBills.reduce((s, b) => s + (b.balanceDue   || 0), 0))}</span>
+              {!isMobile && <span style={{ fontSize: DS.font.size.sm, fontWeight: DS.font.weight.semibold, color: DS.colors.info.DEFAULT }}>Tax: {inr(filteredBills.reduce((s, b) => s + (b.cgst || 0) + (b.sgst || 0), 0))}</span>}
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Modals ─────────────────────────────────────────────────── */}
+      {/* Modals */}
       {paymentBill && (
         <PaymentModal
           bill={paymentBill}
