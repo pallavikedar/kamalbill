@@ -188,11 +188,7 @@ export default function App() {
     setClients((prev) => prev.filter((c) => c.id !== id));
 
   // ── Print modal handlers ──────────────────────────────────────────────────
-  const handleViewBill  = (billId) => {
-    console.log("Viewing bill with ID:", billId);
-    setViewingBillId(billId);
-  };
-
+ 
   const handleClosePrint = () => setViewingBillId(null);
 
   // ── Checking session screen ───────────────────────────────────────────────

@@ -531,7 +531,7 @@ export default function NewBillForm({ bills, onSave }) {
     }
   }, [bills]);
 
-  useEffect(() => { fetchClientsFromAppwrite(); }, []);
+ useEffect(() => { fetchClientsFromAppwrite(); }, [fetchClientsFromAppwrite]);
 
   const fetchClientsFromAppwrite = async () => {
     setClientsLoading(true);
@@ -555,29 +555,35 @@ export default function NewBillForm({ bills, onSave }) {
     }
   };
 
+ const getGSTRates = useCallback(() => {
+  if (form.gstType === "without_gst") return { cgstPercent: 0, sgstPercent: 0, totalPercent: 0 };
+  const selectedRate = GST_RATES.find(r => r.value === form.gstRate);
+  if (selectedRate) return { cgstPercent: selectedRate.cgst, sgstPercent: selectedRate.sgst, totalPercent: selectedRate.value };
+  return { cgstPercent: 0, sgstPercent: 0, totalPercent: 0 };
+}, [form.gstType, form.gstRate]);
+
+  const calc = useMemo(() => {
   const getGSTRates = () => {
     if (form.gstType === "without_gst") return { cgstPercent: 0, sgstPercent: 0, totalPercent: 0 };
     const selectedRate = GST_RATES.find(r => r.value === form.gstRate);
     if (selectedRate) return { cgstPercent: selectedRate.cgst, sgstPercent: selectedRate.sgst, totalPercent: selectedRate.value };
     return { cgstPercent: 0, sgstPercent: 0, totalPercent: 0 };
   };
-
-  const calc = useMemo(() => {
-    const subtotal = form.items.reduce((s, i) => s + i.qty * i.rate, 0);
-    const discountAmount = form.discount > 0
-      ? (form.discountType === "percentage" ? (subtotal * form.discount) / 100 : form.discount)
-      : 0;
-    const afterDiscount = subtotal - discountAmount;
-    const { cgstPercent, sgstPercent } = getGSTRates();
-    const cgst = afterDiscount * (cgstPercent / 100);
-    const sgst = afterDiscount * (sgstPercent / 100);
-    const total = afterDiscount + cgst + sgst;
-    const advancePayment = Math.min(form.advancePayment || 0, total);
-    const balanceDue = total - advancePayment;
-    const paymentStatus = balanceDue <= 0 ? "paid" : advancePayment > 0 ? "partial" : "pending";
-    return { subtotal, discountAmount, afterDiscount, cgst, sgst, total, advancePayment, balanceDue, paymentStatus, cgstPercent, sgstPercent };
-  }, [form.items, form.discount, form.discountType, form.advancePayment, form.gstType, form.gstRate]);
-
+  
+  const subtotal = form.items.reduce((s, i) => s + i.qty * i.rate, 0);
+  const discountAmount = form.discount > 0
+    ? (form.discountType === "percentage" ? (subtotal * form.discount) / 100 : form.discount)
+    : 0;
+  const afterDiscount = subtotal - discountAmount;
+  const { cgstPercent, sgstPercent } = getGSTRates();
+  const cgst = afterDiscount * (cgstPercent / 100);
+  const sgst = afterDiscount * (sgstPercent / 100);
+  const total = afterDiscount + cgst + sgst;
+  const advancePayment = Math.min(form.advancePayment || 0, total);
+  const balanceDue = total - advancePayment;
+  const paymentStatus = balanceDue <= 0 ? "paid" : advancePayment > 0 ? "partial" : "pending";
+  return { subtotal, discountAmount, afterDiscount, cgst, sgst, total, advancePayment, balanceDue, paymentStatus, cgstPercent, sgstPercent };
+}, [form.items, form.discount, form.discountType, form.advancePayment, form.gstType, form.gstRate]);
   const addItem    = () => setForm(f => ({ ...f, items: [...f.items, { id: Date.now(), desc: "", qty: 1, rate: 0 }] }));
   const removeItem = (id) => { if (form.items.length === 1) return; setForm(f => ({ ...f, items: f.items.filter(i => i.id !== id) })); };
   const updateItem = (id, key, val) => setForm(f => ({

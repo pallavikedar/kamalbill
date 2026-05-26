@@ -589,7 +589,7 @@ export default function PrintBill({ billId, onClose }) {
                   setTimeout(function() { window.close(); }, 100);
                 }, 500);
               }
-            <\/script>
+            </script>
           </body>
         </html>
       `);
